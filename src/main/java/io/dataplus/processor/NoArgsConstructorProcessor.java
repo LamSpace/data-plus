@@ -39,7 +39,7 @@ public class NoArgsConstructorProcessor extends BaseAnnotationProcessor {
                 public void visitClassDef(JCTree.JCClassDecl jcClassDecl) {
                     messager.printMessage(Diagnostic.Kind.NOTE, "Starts process @NoArgsConstructor with class [" + jcClassDecl.name.toString() + "].");
                     if (!Helper.hasNoArgsConstructor(jcClassDecl)) {
-                        jcClassDecl.defs = jcClassDecl.defs.append(buildNoArgsConstructor());
+                        jcClassDecl.defs = jcClassDecl.defs.append(buildNoArgsConstructor(jcClassDecl.name.toString()));
                     }
                     messager.printMessage(Diagnostic.Kind.NOTE, "Ends process @NoArgsConstructor with class [" + jcClassDecl.name.toString() + "].");
                 }
@@ -48,8 +48,8 @@ public class NoArgsConstructorProcessor extends BaseAnnotationProcessor {
         return true;
     }
 
-    private JCTree.JCMethodDecl buildNoArgsConstructor() {
-        logger.log(Level.INFO, "构建无参构造方法.");
+    private JCTree.JCMethodDecl buildNoArgsConstructor(String className) {
+        logger.log(Level.INFO, "构建 [" + className + "] 无参构造方法.");
         JCTree.JCBlock block = super.treeMaker.Block(0, List.nil());
         return super.treeMaker.MethodDef(super.treeMaker.Modifiers(Flags.PUBLIC),
                 super.names.fromString(Constants.CONSTRUCTOR_NAME),
