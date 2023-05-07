@@ -22,6 +22,7 @@ import java.util.logging.Logger;
  * 自定义注解 {@code @Getter} 处理器.
  *
  * @author Lam Tong
+ * @see Getter
  */
 @SupportedAnnotationTypes(value = {"io.dataplus.annotation.Getter"})
 @SupportedSourceVersion(value = SourceVersion.RELEASE_8)

@@ -66,6 +66,7 @@ public class ToStringProcessor extends BaseAnnotationProcessor {
      * @param className 类名
      * @return toString 实例方法定义
      */
+    @SuppressWarnings(value = {"AlibabaMethodTooLong"})
     private JCTree.JCMethodDecl buildToString(String className) {
         logger.log(Level.INFO, "构建 [" + className + "] toString 实例方法.");
         ListBuffer<JCTree.JCStatement> statements = new ListBuffer<>();

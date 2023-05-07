@@ -10,6 +10,7 @@ import com.sun.tools.javac.util.ListBuffer;
 
 import javax.lang.model.element.Modifier;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -24,12 +25,28 @@ final class Helper {
 
 
     /**
-     * 判断目标类是否存在无参构造方法.
+     * 判断目标类是否存在无参构造方法. 判断条件如下:
+     * <ol>
+     *     <li>方法名为 {@code <init>}</li>
+     *     <li>方法参数个数为 0</li>
+     *     <li>目标类中不存在修饰符包含 final 的属性</li>
+     * </ol>
+     * 三个条件缺一不可.
      *
      * @param jcClass 目标类的 JCClass 实例
      * @return true: 目标类构造方法无任何参数时返回 true, 否则返回 false
      */
     static boolean hasNoArgsConstructor(JCTree.JCClassDecl jcClass) {
+        for (JCTree jcTree : jcClass.defs) {
+            if (jcTree.getKind().equals(Tree.Kind.VARIABLE)) {
+                JCTree.JCVariableDecl variableDecl = (JCTree.JCVariableDecl) jcTree;
+                Set<Modifier> flags = variableDecl.mods.getFlags();
+                if (!flags.contains(Modifier.STATIC) && flags.contains(Modifier.FINAL)) {
+                    logger.log(Level.INFO, "[" + jcClass.name.toString() + "] 包含 final 属性 " + variableDecl.name.toString() + ", 无法添加无参构造方法.");
+                    return true;
+                }
+            }
+        }
         for (JCTree jcTree : jcClass.defs) {
             if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
                 JCTree.JCMethodDecl jcMethodDecl = (JCTree.JCMethodDecl) jcTree;
@@ -48,6 +65,7 @@ final class Helper {
      * @return true: 目标类的构造方法数量等于目标类的属性数量且每个属性均赋值, 否则返回 false
      */
     static boolean hasAllArgsConstructor(JCTree.JCClassDecl jcClass, List<JCTree.JCVariableDecl> variableDecls) {
+        // 全参构造方法判断条件: 方法名为 <init> 且参数个数与
         for (JCTree jcTree : jcClass.defs) {
             if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
                 JCTree.JCMethodDecl method = (JCTree.JCMethodDecl) jcTree;
@@ -112,7 +130,7 @@ final class Helper {
             if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
                 JCTree.JCMethodDecl jcMethodDecl = (JCTree.JCMethodDecl) jcTree;
                 if (Constants.TO_STRING.equals(jcMethodDecl.name.toString())) {
-                    // TODO: 2023/5/7 todo toString 实例方法两要素: 方法名为 toString、参数个数为 0 以及 返回类型为 String
+                    // TODO: 2023/5/7 toString 实例方法两要素: 方法名为 toString、参数个数为 0 以及 返回类型为 String
                     return jcMethodDecl.params.size() == 0;
                 }
             }
