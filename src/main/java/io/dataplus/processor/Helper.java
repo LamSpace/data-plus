@@ -111,7 +111,7 @@ final class Helper {
             if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
                 JCTree.JCMethodDecl jcMethodDecl = (JCTree.JCMethodDecl) jcTree;
                 if (Constants.TO_STRING.equals(jcMethodDecl.name.toString())) {
-                    // TODO: 2023/5/7 todo
+                    // TODO: 2023/5/7 todo toString 实例方法两要素: 方法名为 toString、参数个数为 0 以及 返回类型为 String
                     return jcMethodDecl.params.size() == 0;
                 }
             }
@@ -148,6 +148,37 @@ final class Helper {
                 variableDecl.vartype,
                 null
         );
+    }
+
+    /**
+     * 判断给定的目标类中是否存在属性的 {@code Getter} 实例方法
+     *
+     * @param classDecl    目标类实例
+     * @param variableDecl 目标类属性实例
+     * @return true 或者 false
+     */
+    static boolean hasGetterMethod(JCTree.JCClassDecl classDecl, JCTree.JCVariableDecl variableDecl) {
+        String getterMethodName = convertFieldNameToGetterMethodName(variableDecl.name.toString());
+        for (JCTree jcTree : classDecl.defs) {
+            if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
+                JCTree.JCMethodDecl jcMethodDecl = (JCTree.JCMethodDecl) jcTree;
+                if (getterMethodName.equals(jcMethodDecl.name.toString()) && jcMethodDecl.params.size() == 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 将属性名转换为对应的 {@code Getter} 实例方法名.
+     *
+     * @param fieldName 属性名
+     * @return Getter 实例方法名
+     */
+    static String convertFieldNameToGetterMethodName(String fieldName) {
+        // TODO: 2023/5/7 布尔类型的变量另算
+        return Constants.GET + StringUtils.capitalize(fieldName);
     }
 
     /**
