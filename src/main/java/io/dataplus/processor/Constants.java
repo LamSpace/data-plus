@@ -10,6 +10,8 @@ final class Constants {
 
     static final String CONSTRUCTOR_NAME = "<init>";
 
+    static final String TO_STRING = "toString";
+
     private Constants() {
     }
 

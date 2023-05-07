@@ -22,6 +22,7 @@ import java.util.logging.Logger;
  * 自定义注解 {@code @NoArgsConstructor} 处理器.
  *
  * @author Lam Tong
+ * @see NoArgsConstructor
  */
 @SupportedAnnotationTypes(value = {"io.dataplus.annotation.NoArgsConstructor"})
 @SupportedSourceVersion(value = SourceVersion.RELEASE_8)
@@ -35,14 +36,20 @@ public class NoArgsConstructorProcessor extends BaseAnnotationProcessor {
         for (Element element : elements) {
             JCTree jcTree = super.trees.getTree(element);
             jcTree.accept(new TreeTranslator() {
+
                 @Override
                 public void visitClassDef(JCTree.JCClassDecl jcClassDecl) {
-                    messager.printMessage(Diagnostic.Kind.NOTE, "Starts process @NoArgsConstructor with class [" + jcClassDecl.name.toString() + "].");
+                    String className = jcClassDecl.name.toString();
+                    messager.printMessage(Diagnostic.Kind.NOTE, "Starts process @NoArgsConstructor with class [" + className + "].");
+
                     if (!Helper.hasNoArgsConstructor(jcClassDecl)) {
-                        jcClassDecl.defs = jcClassDecl.defs.append(buildNoArgsConstructor(jcClassDecl.name.toString()));
+                        jcClassDecl.defs = jcClassDecl.defs.append(buildNoArgsConstructor(className));
+                        logger.log(Level.INFO, "构建 [" + className + "] 无参构造方法完毕.");
                     }
-                    messager.printMessage(Diagnostic.Kind.NOTE, "Ends process @NoArgsConstructor with class [" + jcClassDecl.name.toString() + "].");
+
+                    messager.printMessage(Diagnostic.Kind.NOTE, "Ends process @NoArgsConstructor with class [" + className + "].");
                 }
+
             });
         }
         return true;

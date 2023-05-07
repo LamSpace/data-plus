@@ -30,27 +30,30 @@ public abstract class BaseAnnotationProcessor extends AbstractProcessor {
 
     Names names;
 
-    @Override
-    public final synchronized void init(ProcessingEnvironment processingEnv) {
-        super.init(processingEnv);
-        this.messager = processingEnv.getMessager();
-        ProcessingEnvironment unwrappedProcessingEnv = jbUnwrap(ProcessingEnvironment.class, processingEnv);
-        this.trees = JavacTrees.instance(unwrappedProcessingEnv);
-        Context context = ((JavacProcessingEnvironment) unwrappedProcessingEnv).getContext();
-        this.treeMaker = TreeMaker.instance(context);
-        this.names = Names.instance(context);
-        logger.log(Level.INFO, "注解处理器公共类初始化完成.");
-    }
-
+    @SuppressWarnings(value = {"SameParameterValue"})
     private static <T> T jbUnwrap(Class<? extends T> iface, T wrapper) {
         T unwrapped = null;
         try {
             final Class<?> apiWrappers = wrapper.getClass().getClassLoader().loadClass("org.jetbrains.jps.javac.APIWrappers");
             final Method unwrapMethod = apiWrappers.getDeclaredMethod("unwrap", Class.class, Object.class);
             unwrapped = iface.cast(unwrapMethod.invoke(null, iface, wrapper));
+        } catch (Throwable ignored) {
         }
-        catch (Throwable ignored) {}
-        return unwrapped != null? unwrapped : wrapper;
+        return unwrapped != null ? unwrapped : wrapper;
+    }
+
+    @Override
+    public final synchronized void init(ProcessingEnvironment processingEnv) {
+        super.init(processingEnv);
+        this.messager = processingEnv.getMessager();
+        if (!(processingEnv instanceof JavacProcessingEnvironment)) {
+            processingEnv = jbUnwrap(ProcessingEnvironment.class, processingEnv);
+        }
+        this.trees = JavacTrees.instance(processingEnv);
+        Context context = ((JavacProcessingEnvironment) processingEnv).getContext();
+        this.treeMaker = TreeMaker.instance(context);
+        this.names = Names.instance(context);
+        logger.log(Level.INFO, "注解处理器公共类初始化完成.");
     }
 
 }
