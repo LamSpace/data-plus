@@ -1,2 +1,3 @@
 io.dataplus.processor.NoArgsConstructorProcessor
 io.dataplus.processor.AllArgsConstructorProcessor
+io.dataplus.processor.HelloProcessor

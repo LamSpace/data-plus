@@ -12,6 +12,8 @@ final class Constants {
 
     static final String TO_STRING = "toString";
 
+    static final String HELLO_METHOD = "hello";
+
     private Constants() {
     }
 

@@ -80,6 +80,25 @@ final class Helper {
         return variableDecls.toList();
     }
 
+    /**
+     * 判断目标类是否存在 hello() 实例方法.
+     *
+     * @param jcClass 目标类的 JCClass 实例
+     * @return true 或者 false
+     */
+    static boolean hasHelloMethod(JCTree.JCClassDecl jcClass) {
+        for (JCTree jcTree : jcClass.defs) {
+            if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
+                JCTree.JCMethodDecl methodDecl = (JCTree.JCMethodDecl) jcTree;
+                if (Constants.HELLO_METHOD.equals(methodDecl.name.toString())) {
+
+                    return methodDecl.params.size() == 0;
+                }
+            }
+        }
+        return false;
+    }
+
 
     /**
      * 判断目标类是否存在 toString 实例方法.

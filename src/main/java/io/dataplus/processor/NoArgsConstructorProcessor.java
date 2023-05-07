@@ -35,6 +35,7 @@ public class NoArgsConstructorProcessor extends BaseAnnotationProcessor {
         Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(NoArgsConstructor.class);
         for (Element element : elements) {
             JCTree jcTree = super.trees.getTree(element);
+            super.treeMaker.pos = jcTree.pos;
             jcTree.accept(new TreeTranslator() {
 
                 @Override
