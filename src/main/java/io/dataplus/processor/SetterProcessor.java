@@ -74,8 +74,13 @@ public class SetterProcessor extends BaseAnnotationProcessor {
         logger.log(Level.INFO, "构建 [" + className + "] 属性 setter 实例方法.");
         ListBuffer<JCTree> methods = new ListBuffer<>();
         for (JCTree.JCVariableDecl variableDecl : fields) {
-            if (!variableDecl.mods.getFlags().contains(Modifier.FINAL) && !Helper.hasSetterMethod(classDecl, variableDecl)) {
-                methods.append(this.buildSetterMethod(className, variableDecl));
+            // 只有不包含 final 修饰符的属性才能生成 setter 实例方法
+            if (!Helper.hasSetterMethod(classDecl, variableDecl)) {
+                if (variableDecl.mods.getFlags().contains(Modifier.FINAL)) {
+                    logger.log(Level.INFO, "[" + className + "] 包含 final 属性 " + variableDecl.name.toString() + ", 无法生成 setter 实例方法.");
+                } else {
+                    methods.append(this.buildSetterMethod(className, variableDecl));
+                }
             }
         }
         return methods.toList();

@@ -59,19 +59,32 @@ final class Helper {
     }
 
     /**
-     * 判断目标类是否存在全参数构造方法.
+     * 判断目标类是否存在全参数构造方法. 判断条件如下:
+     * <ol>
+     *     <li>方法名为 {@code <init>}</li>
+     *     <li>方法参数个数等于类实例属性个数, 即非 {@code static} 属性的个数</li>
+     *     <li>每个属性的类型与全参构造方法某个参数的类型匹配.</li>
+     * </ol>
+     * 以上并不能保证全参构造方法能够实例化每个实例属性.
      *
      * @param jcClass 目标类的 JCClass 实例
      * @return true: 目标类的构造方法数量等于目标类的属性数量且每个属性均赋值, 否则返回 false
      */
     static boolean hasAllArgsConstructor(JCTree.JCClassDecl jcClass, List<JCTree.JCVariableDecl> variableDecls) {
-        // 全参构造方法判断条件: 方法名为 <init> 且参数个数与
         for (JCTree jcTree : jcClass.defs) {
             if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
                 JCTree.JCMethodDecl method = (JCTree.JCMethodDecl) jcTree;
                 if (Constants.CONSTRUCTOR_NAME.equals(method.name.toString()) && variableDecls.size() == method.params.size()) {
                     for (JCTree.JCVariableDecl variableDecl : variableDecls) {
-                        if (!method.params.contains(variableDecl)) {
+                        boolean flag = false;
+                        for (int i = 0; i < method.params.size(); i++) {
+                            JCTree.JCVariableDecl methodParameter = method.params.get(i);
+                            if (methodParameter.vartype.type.equals(variableDecl.vartype.type)) {
+                                flag = true;
+                                break;
+                            }
+                        }
+                        if (!flag) {
                             return false;
                         }
                     }
@@ -83,7 +96,7 @@ final class Helper {
     }
 
     /**
-     * 获取目标类的所有属性集合.
+     * 获取目标类的所有实例属性集合, 即非静态属性, 包括 final 类型的属性.
      *
      * @param jcClassDecl 目标类的 JCClass 实例
      * @return 目标类的所有属性集合.
@@ -246,7 +259,7 @@ final class Helper {
         if (tree.getKind().equals(Tree.Kind.VARIABLE)) {
             JCTree.JCVariableDecl variableDecl = (JCTree.JCVariableDecl) tree;
             Set<Modifier> flags = variableDecl.mods.getFlags();
-            return !flags.contains(Modifier.STATIC) && !flags.contains(Modifier.FINAL);
+            return !flags.contains(Modifier.STATIC);
         }
         return false;
     }
