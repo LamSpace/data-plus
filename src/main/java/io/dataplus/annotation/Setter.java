@@ -7,7 +7,7 @@ import java.lang.annotation.*;
  *
  * @author Lam Tong
  */
-@Target(value = {ElementType.FIELD, ElementType.TYPE})
+@Target(value = {ElementType.TYPE})
 @Retention(value = RetentionPolicy.SOURCE)
 @Documented
 public @interface Setter {

@@ -2,6 +2,7 @@ package io.dataplus.processor;
 
 import com.sun.source.tree.Tree;
 import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.util.List;
@@ -162,7 +163,32 @@ final class Helper {
         for (JCTree jcTree : classDecl.defs) {
             if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
                 JCTree.JCMethodDecl jcMethodDecl = (JCTree.JCMethodDecl) jcTree;
-                if (getterMethodName.equals(jcMethodDecl.name.toString()) && jcMethodDecl.params.size() == 0) {
+                if (getterMethodName.equals(jcMethodDecl.name.toString())
+                        && jcMethodDecl.params.size() == 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 判断给定的目标类中是否存在属性的 {@code Setter} 实例方法
+     *
+     * @param classDecl    目标类实例
+     * @param variableDecl 目标类属性实例
+     * @return true 或者 false
+     */
+    static boolean hasSetterMethod(JCTree.JCClassDecl classDecl, JCTree.JCVariableDecl variableDecl) {
+        String setterMethodName = convertFieldNameToSetterMethodName(variableDecl.name.toString());
+        for (JCTree jcTree : classDecl.defs) {
+            if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
+                JCTree.JCMethodDecl methodDecl = (JCTree.JCMethodDecl) jcTree;
+                if (setterMethodName.equals(methodDecl.name.toString())
+                        && methodDecl.params.size() == 1
+                        && methodDecl.params.get(0).vartype.type.equals(variableDecl.vartype.type)
+                        && methodDecl.getReturnType().type.equals(new Type.JCVoidType())) {
+                    // setter 实例方法三要素: setter 方法名、参数个数为 1 且参数类型为属性类型以及方法返回值为 void
                     return true;
                 }
             }
@@ -179,6 +205,17 @@ final class Helper {
     static String convertFieldNameToGetterMethodName(String fieldName) {
         // TODO: 2023/5/7 布尔类型的变量另算
         return Constants.GET + StringUtils.capitalize(fieldName);
+    }
+
+    /**
+     * 将属性名转换为对应的 {@code Setter} 实例方法名.
+     *
+     * @param fieldName 属性名
+     * @return Setter 实例方法名
+     */
+    static String convertFieldNameToSetterMethodName(String fieldName) {
+        // TODO: 2023/5/7 布尔类型的变量另算
+        return Constants.SET + StringUtils.capitalize(fieldName);
     }
 
     /**
