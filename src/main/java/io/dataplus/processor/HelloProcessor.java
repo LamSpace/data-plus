@@ -77,7 +77,7 @@ public class HelloProcessor extends BaseAnnotationProcessor {
         return super.treeMaker.MethodDef(
                 super.treeMaker.Modifiers(Flags.PUBLIC),
                 super.names.fromString(Constants.HELLO_METHOD),
-                super.treeMaker.Ident(super.names.fromString("String")),
+                super.treeMaker.Ident(super.names.fromString(Constants.STRING_NAME)),
                 List.nil(),
                 List.nil(),
                 List.nil(),

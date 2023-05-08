@@ -71,94 +71,53 @@ public class ToStringProcessor extends BaseAnnotationProcessor {
         logger.log(Level.INFO, "构建 [" + className + "] toString 实例方法.");
         ListBuffer<JCTree.JCStatement> statements = new ListBuffer<>();
 
-        JCTree.JCNewClass stringBuilder = super.treeMaker.NewClass(
-                null,
-                List.nil(),
-                super.treeMaker.Ident(super.names.fromString("StringBuilder")),
-                List.nil(),
-                null
-        );
-        JCTree.JCVariableDecl sVariable = super.treeMaker.VarDef(
-                super.treeMaker.Modifiers(Flags.PARAMETER),
-                super.names.fromString("sb"),
-                super.treeMaker.Ident(super.names.fromString("StringBuilder")),
-                stringBuilder
+        JCTree.JCVariableDecl previous = null;
+        JCTree.JCExpression expression = super.treeMaker.Literal(className.concat("{"));
+        for (int i = 0; i < fields.size(); i++) {
+            JCTree.JCVariableDecl variableDecl = fields.get(i);
+            String fieldName = variableDecl.name.toString().concat("=");
+            if (Constants.STRING_CLASS_NAME.equals(variableDecl.vartype.type.toString())) {
+                fieldName = fieldName.concat("'");
+            }
+            if (i > 0) {
+                if (Constants.STRING_CLASS_NAME.equals(previous.vartype.type.toString())) {
+                    fieldName = "', ".concat(fieldName);
+                } else {
+                    fieldName = ", ".concat(fieldName);
+                }
+            }
+            expression = super.treeMaker.Binary(
+                    JCTree.Tag.PLUS,
+                    expression,
+                    super.treeMaker.Literal(fieldName)
+            );
+            expression = super.treeMaker.Binary(
+                    JCTree.Tag.PLUS,
+                    expression,
+                    super.treeMaker.Ident(super.names.fromString(variableDecl.name.toString()))
+            );
+            previous = variableDecl;
+        }
+        String endWith = "} => Created By Data-Plus.";
+        if (previous != null && Constants.STRING_CLASS_NAME.equals(previous.vartype.type.toString())) {
+            endWith = "'".concat(endWith);
+        }
+        expression = super.treeMaker.Binary(
+                JCTree.Tag.PLUS,
+                expression,
+                super.treeMaker.Literal(endWith)
         );
 
-        statements.append(sVariable);
-        statements.append(
-                super.treeMaker.Exec(
-                        super.treeMaker.Apply(
-                                List.nil(),
-                                super.treeMaker.Select(
-                                        super.treeMaker.Ident(super.names.fromString("sb")),
-                                        super.names.fromString("append")
-                                ),
-                                List.of(super.treeMaker.Literal(className + "["))
-                        )
-                )
-        );
-        // TODO: 2023/5/7 优化生成 toString 方法, 最好是不采用 StringBuilder 拼接, 或者是优化 StringBuilder 拼接的逻辑
-        // add = "a"+"b"
-        // treeMaker.Exec(treeMaker.Assign(treeMaker.Ident(names.fromString("add")),treeMaker.Binary(JCTree.Tag.PLUS,treeMaker.Literal("a"),treeMaker.Literal("b"))))
-        boolean first = true;
-        for (JCTree.JCVariableDecl variableDecl : fields) {
-            statements.append(
-                    super.treeMaker.Exec(
-                            super.treeMaker.Apply(
-                                    List.nil(),
-                                    super.treeMaker.Select(
-                                            super.treeMaker.Ident(super.names.fromString("sb")),
-                                            super.names.fromString("append")
-                                    ),
-                                    List.of(first ? super.treeMaker.Literal(variableDecl.name.toString().concat("=")) :
-                                            super.treeMaker.Literal(", ".concat(variableDecl.name.toString()).concat("=")))
-                            )
-                    )
-            );
-            statements.append(
-                    super.treeMaker.Exec(
-                            super.treeMaker.Apply(
-                                    List.nil(),
-                                    super.treeMaker.Select(
-                                            super.treeMaker.Ident(super.names.fromString("sb")),
-                                            super.names.fromString("append")
-                                    ),
-                                    List.of(super.treeMaker.Ident(super.names.fromString(variableDecl.name.toString())))
-                            )
-                    )
-            );
-            first = false;
-        }
-        statements.append(
-                super.treeMaker.Exec(
-                        super.treeMaker.Apply(
-                                List.nil(),
-                                super.treeMaker.Select(
-                                        super.treeMaker.Ident(super.names.fromString("sb")),
-                                        super.names.fromString("append")
-                                ),
-                                List.of(super.treeMaker.Literal("]"))
-                        )
-                )
-        );
         statements.append(
                 super.treeMaker.Return(
-                        super.treeMaker.Apply(
-                                List.nil(),
-                                super.treeMaker.Select(
-                                        super.treeMaker.Ident(super.names.fromString("sb")),
-                                        super.names.fromString("toString")
-                                ),
-                                List.nil()
-                        )
+                        expression
                 )
         );
 
         JCTree.JCBlock block = super.treeMaker.Block(0, statements.toList());
         return super.treeMaker.MethodDef(super.treeMaker.Modifiers(Flags.PUBLIC),
                 super.names.fromString(Constants.TO_STRING),
-                super.treeMaker.Ident(super.names.fromString("String")),
+                super.treeMaker.Ident(super.names.fromString(Constants.STRING_NAME)),
                 List.nil(),
                 List.nil(),
                 List.nil(),

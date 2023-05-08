@@ -42,6 +42,16 @@ final class Constants {
      */
     static final String HELLO_METHOD = "hello";
 
+    /**
+     * {@link String} 类全限定名
+     */
+    static final String STRING_CLASS_NAME = "java.lang.String";
+
+    /**
+     * {@link String} 类名
+     */
+    static final String STRING_NAME = "String";
+
     private Constants() {
     }
 
