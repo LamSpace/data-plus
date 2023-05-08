@@ -99,6 +99,8 @@ public class ToStringProcessor extends BaseAnnotationProcessor {
                 )
         );
         // TODO: 2023/5/7 优化生成 toString 方法, 最好是不采用 StringBuilder 拼接, 或者是优化 StringBuilder 拼接的逻辑
+        // add = "a"+"b"
+        // treeMaker.Exec(treeMaker.Assign(treeMaker.Ident(names.fromString("add")),treeMaker.Binary(JCTree.Tag.PLUS,treeMaker.Literal("a"),treeMaker.Literal("b"))))
         boolean first = true;
         for (JCTree.JCVariableDecl variableDecl : fields) {
             statements.append(

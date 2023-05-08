@@ -2,7 +2,6 @@ package io.dataplus.processor;
 
 import com.sun.source.tree.Tree;
 import com.sun.tools.javac.code.Flags;
-import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.util.List;
@@ -20,7 +19,6 @@ import java.util.logging.Logger;
  */
 final class Helper {
 
-    @SuppressWarnings(value = {"unused"})
     private static final Logger logger = Logger.getLogger(Helper.class.getName());
 
 
@@ -42,7 +40,8 @@ final class Helper {
                 JCTree.JCVariableDecl variableDecl = (JCTree.JCVariableDecl) jcTree;
                 Set<Modifier> flags = variableDecl.mods.getFlags();
                 if (!flags.contains(Modifier.STATIC) && flags.contains(Modifier.FINAL)) {
-                    logger.log(Level.INFO, "[" + jcClass.name.toString() + "] 包含 final 属性 " + variableDecl.name.toString() + ", 无法添加无参构造方法.");
+                    logger.log(Level.INFO, "[" + jcClass.name.toString() +
+                            "] 包含 final 属性 " + variableDecl.name.toString() + ", 无法添加无参构造方法.");
                     return true;
                 }
             }
@@ -74,7 +73,8 @@ final class Helper {
         for (JCTree jcTree : jcClass.defs) {
             if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
                 JCTree.JCMethodDecl method = (JCTree.JCMethodDecl) jcTree;
-                if (Constants.CONSTRUCTOR_NAME.equals(method.name.toString()) && variableDecls.size() == method.params.size()) {
+                if (Constants.CONSTRUCTOR_NAME.equals(method.name.toString())
+                        && variableDecls.size() == method.params.size()) {
                     for (JCTree.JCVariableDecl variableDecl : variableDecls) {
                         boolean flag = false;
                         for (int i = 0; i < method.params.size(); i++) {
@@ -113,7 +113,14 @@ final class Helper {
     }
 
     /**
-     * 判断目标类是否存在 hello() 实例方法.
+     * 判断目标类是否存在 hello() 实例方法. 判断条件如下:
+     * <ol>
+     *     <li>方法名为 hello</li>
+     *     <li>方法无参</li>
+     *     <li>方法返回值为 String 类型</li>
+     * </ol>
+     * 该方法是 {@code @Hello} 注解对应生成的实例方法. 由于 {@code Java} 中关于方法重载的要求未规定方法返回值可作为重载区分标志,
+     * 因此无法通过判断方法返回值来确定是否包含对应的实例方法.
      *
      * @param jcClass 目标类的 JCClass 实例
      * @return true 或者 false
@@ -123,8 +130,15 @@ final class Helper {
             if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
                 JCTree.JCMethodDecl methodDecl = (JCTree.JCMethodDecl) jcTree;
                 if (Constants.HELLO_METHOD.equals(methodDecl.name.toString())) {
-
-                    return methodDecl.params.size() == 0;
+                    if (methodDecl.params.size() == 0) {
+                        String resultType = methodDecl.restype.type.toString();
+                        Set<Modifier> flags = methodDecl.mods.getFlags();
+                        logger.log(Level.INFO, "[" + jcClass.name.toString() +
+                                "] 存在 hello() 方法, 方法返回值类型: " + resultType +
+                                ", 方法修饰符: " + flags + ".");
+                        return true;
+                    }
+                    return false;
                 }
             }
         }
@@ -133,7 +147,14 @@ final class Helper {
 
 
     /**
-     * 判断目标类是否存在 toString 实例方法.
+     * 判断目标类是否存在 toString 实例方法. 判断条件如下:
+     * <ol>
+     *     <li>方法名为 toString</li>
+     *     <li>方法无参</li>
+     *     <li>方法返回值类型为 String</li>
+     * </ol>
+     * 由于 toString() 实例方法是 {@code java.lang.Object} 的方法, 任何类生成 toString 方法时方法签名与返回值类型
+     * 都需要与 {@code java.lang.Object#toString()} 方法保持一致. 因此此处可以不判断方法返回值类型.
      *
      * @param jcClass 目标类的 JCClass 实例
      * @return true 或者 false
@@ -143,7 +164,6 @@ final class Helper {
             if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
                 JCTree.JCMethodDecl jcMethodDecl = (JCTree.JCMethodDecl) jcTree;
                 if (Constants.TO_STRING.equals(jcMethodDecl.name.toString())) {
-                    // TODO: 2023/5/7 toString 实例方法两要素: 方法名为 toString、参数个数为 0 以及 返回类型为 String
                     return jcMethodDecl.params.size() == 0;
                 }
             }
@@ -183,19 +203,29 @@ final class Helper {
     }
 
     /**
-     * 判断给定的目标类中是否存在属性的 {@code Getter} 实例方法
+     * 判断给定的目标类中是否存在属性的 {@code Getter} 实例方法. 判断条件:
+     * <ol>
+     *     <li>方法名为 getXXX</li>
+     *     <li>方法无参</li>
+     *     <li>方法返回值类型与实例属性类型相等</li>
+     * </ol>
+     * 无法根据方法返回值来确定是否需要生成 getter 实例方法.
      *
      * @param classDecl    目标类实例
      * @param variableDecl 目标类属性实例
      * @return true 或者 false
      */
     static boolean hasGetterMethod(JCTree.JCClassDecl classDecl, JCTree.JCVariableDecl variableDecl) {
+        String className = classDecl.name.toString();
         String getterMethodName = convertFieldNameToGetterMethodName(variableDecl.name.toString());
         for (JCTree jcTree : classDecl.defs) {
             if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
                 JCTree.JCMethodDecl jcMethodDecl = (JCTree.JCMethodDecl) jcTree;
                 if (getterMethodName.equals(jcMethodDecl.name.toString())
                         && jcMethodDecl.params.size() == 0) {
+                    logger.log(Level.INFO, "[" + className + "] 存在实例方法 " + getterMethodName +
+                            ", 预期返回值类型: " + variableDecl.vartype.type.toString() +
+                            ", 实际返回值类型: " + jcMethodDecl.restype.type.toString());
                     return true;
                 }
             }
@@ -204,22 +234,29 @@ final class Helper {
     }
 
     /**
-     * 判断给定的目标类中是否存在属性的 {@code Setter} 实例方法
+     * 判断给定的目标类中是否存在属性的 {@code Setter} 实例方法, 判断条件:
+     * <ol>
+     *     <li>方法名为 setXXX</li>
+     *     <li>方法仅有一个参数</li>
+     *     <li>方法参数类型与实例属性类型相等</li>
+     *     <li>方法返回值类型为 Void(非强制)</li>
+     * </ol>
      *
      * @param classDecl    目标类实例
      * @param variableDecl 目标类属性实例
      * @return true 或者 false
      */
     static boolean hasSetterMethod(JCTree.JCClassDecl classDecl, JCTree.JCVariableDecl variableDecl) {
+        String className = classDecl.name.toString();
         String setterMethodName = convertFieldNameToSetterMethodName(variableDecl.name.toString());
         for (JCTree jcTree : classDecl.defs) {
             if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
                 JCTree.JCMethodDecl methodDecl = (JCTree.JCMethodDecl) jcTree;
                 if (setterMethodName.equals(methodDecl.name.toString())
                         && methodDecl.params.size() == 1
-                        && methodDecl.params.get(0).vartype.type.equals(variableDecl.vartype.type)
-                        && methodDecl.getReturnType().type.equals(new Type.JCVoidType())) {
-                    // setter 实例方法三要素: setter 方法名、参数个数为 1 且参数类型为属性类型以及方法返回值为 void
+                        && methodDecl.params.get(0).vartype.type.equals(variableDecl.vartype.type)) {
+                    logger.log(Level.INFO, "[" + className + "] 存在实例方法 " + setterMethodName +
+                            ", 预期返回值类型: void, 实际返回值类型: " + methodDecl.restype.type.toString());
                     return true;
                 }
             }
