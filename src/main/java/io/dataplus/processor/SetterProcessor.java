@@ -110,10 +110,10 @@ public class SetterProcessor extends BaseAnnotationProcessor {
         JCTree.JCBlock block = super.treeMaker.Block(0, statements.toList());
         return super.treeMaker.MethodDef(
                 super.treeMaker.Modifiers(Flags.PUBLIC),
-                super.names.fromString(Helper.convertFieldNameToSetterMethodName(variableDecl.name.toString())),
+                super.names.fromString(Helper.convertFieldNameToSetterMethodName(variableDecl)),
                 super.treeMaker.TypeIdent(TypeTag.VOID),
                 List.nil(),
-                List.nil(),
+                List.of(Helper.cloneFromVariable(super.treeMaker, variableDecl)),
                 List.nil(),
                 block,
                 null

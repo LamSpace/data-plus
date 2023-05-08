@@ -100,7 +100,7 @@ public class GetterProcessor extends BaseAnnotationProcessor {
         JCTree.JCBlock block = super.treeMaker.Block(0, statements.toList());
         return super.treeMaker.MethodDef(
                 super.treeMaker.Modifiers(Flags.PUBLIC),
-                super.names.fromString(Helper.convertFieldNameToGetterMethodName(variableDecl.name.toString())),
+                super.names.fromString(Helper.convertFieldNameToGetterMethodName(variableDecl)),
                 variableDecl.vartype,
                 List.nil(),
                 List.nil(),

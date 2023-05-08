@@ -217,7 +217,7 @@ final class Helper {
      */
     static boolean hasGetterMethod(JCTree.JCClassDecl classDecl, JCTree.JCVariableDecl variableDecl) {
         String className = classDecl.name.toString();
-        String getterMethodName = convertFieldNameToGetterMethodName(variableDecl.name.toString());
+        String getterMethodName = convertFieldNameToGetterMethodName(variableDecl);
         for (JCTree jcTree : classDecl.defs) {
             if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
                 JCTree.JCMethodDecl jcMethodDecl = (JCTree.JCMethodDecl) jcTree;
@@ -248,7 +248,7 @@ final class Helper {
      */
     static boolean hasSetterMethod(JCTree.JCClassDecl classDecl, JCTree.JCVariableDecl variableDecl) {
         String className = classDecl.name.toString();
-        String setterMethodName = convertFieldNameToSetterMethodName(variableDecl.name.toString());
+        String setterMethodName = convertFieldNameToSetterMethodName(variableDecl);
         for (JCTree jcTree : classDecl.defs) {
             if (jcTree.getKind().equals(Tree.Kind.METHOD)) {
                 JCTree.JCMethodDecl methodDecl = (JCTree.JCMethodDecl) jcTree;
@@ -267,22 +267,28 @@ final class Helper {
     /**
      * 将属性名转换为对应的 {@code Getter} 实例方法名.
      *
-     * @param fieldName 属性名
+     * @param variableDecl 属性名
      * @return Getter 实例方法名
      */
-    static String convertFieldNameToGetterMethodName(String fieldName) {
-        // TODO: 2023/5/7 布尔类型的变量另算
+    static String convertFieldNameToGetterMethodName(JCTree.JCVariableDecl variableDecl) {
+        String fieldName = variableDecl.name.toString();
+        if (isBoolean(variableDecl)) {
+            return Constants.IS + StringUtils.capitalize(fieldName);
+        }
         return Constants.GET + StringUtils.capitalize(fieldName);
     }
 
     /**
      * 将属性名转换为对应的 {@code Setter} 实例方法名.
      *
-     * @param fieldName 属性名
+     * @param variableDecl 属性名
      * @return Setter 实例方法名
      */
-    static String convertFieldNameToSetterMethodName(String fieldName) {
-        // TODO: 2023/5/7 布尔类型的变量另算
+    static String convertFieldNameToSetterMethodName(JCTree.JCVariableDecl variableDecl) {
+        String fieldName = variableDecl.name.toString();
+        if (isBoolean(variableDecl)) {
+            return Constants.IS + StringUtils.capitalize(fieldName);
+        }
         return Constants.SET + StringUtils.capitalize(fieldName);
     }
 
@@ -299,6 +305,17 @@ final class Helper {
             return !flags.contains(Modifier.STATIC);
         }
         return false;
+    }
+
+    /**
+     * 判断目标变量是否为 boolean 类型变量, 包括原始数据类型与包装数据类型.
+     *
+     * @param variableDecl 变量实例
+     * @return true: 变量为 boolean 类型变量; 否则返回 false
+     */
+    private static boolean isBoolean(JCTree.JCVariableDecl variableDecl) {
+        String typeString = variableDecl.vartype.type.toString();
+        return "boolean".equals(typeString) || "java.lang.Boolean".equals(typeString);
     }
 
 }
